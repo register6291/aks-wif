@@ -47,6 +47,8 @@ name: 'Terraform'
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - 'plan.json'
   pull_request:
 
 permissions:
@@ -104,6 +106,7 @@ jobs:
 
     - name: Commit report
       run: |
+          git add plan.json
           git config --global user.name 'Register6291'
           git config --global user.email 'register6291@users.noreply.github.com'
           git commit -am "Base infra plan.json"
