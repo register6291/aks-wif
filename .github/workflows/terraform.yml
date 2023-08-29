@@ -50,7 +50,7 @@ on:
   pull_request:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   terraform:
@@ -67,7 +67,14 @@ jobs:
     # Checkout the repository to the GitHub Actions runner
     - name: Checkout
       uses: actions/checkout@v3
-
+    
+    # Setup Infracost  
+    - name: Setup Infracost
+        uses: infracost/actions/setup@v2
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+          
+          
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v1
@@ -84,15 +91,25 @@ jobs:
       
     # Set Variable
     - name: Export
-      run: | 
+      run: |
            export ARM_SUBSCRIPTION_ID="${{ secrets.ARM_SUBSCRIPTION_ID }}"
            export ARM_TENANT_ID="${{ secrets.ARM_TENANT_ID }}"
            export ARM_CLIENT_ID="${{ secrets.ARM_CLIENT_ID }}"
            export ARM_CLIENT_SECRET="${{ secrets.ARM_CLIENT_SECRET }}" 
            
     # Generates an execution plan for Terraform
-    - name: Terraform Plan
-      run: terraform plan -input=false
+    - name: Terraform Plan with Base Benchmark variables
+      run: |
+          terraform plan -input=false  -out tfplan.binary 
+          terraform show -json tfplan.binary > plan.json
+          infracost breakdown --path plan.json
+
+    - name: Commit report
+        run: |
+          git config --global user.name 'Register6291'
+          git config --global user.email 'register6291@users.noreply.github.com'
+          git commit -am "Base infra plan.json"
+          git push      
 
       # On push to "main", build or change infrastructure according to Terraform configuration files
       # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
