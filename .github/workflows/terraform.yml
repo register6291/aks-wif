@@ -104,7 +104,7 @@ jobs:
           infracost breakdown --path plan.json
 
     - name: Commit report
-        run: |
+      run: |
           git config --global user.name 'Register6291'
           git config --global user.email 'register6291@users.noreply.github.com'
           git commit -am "Base infra plan.json"
