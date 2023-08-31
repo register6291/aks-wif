@@ -1,55 +1,20 @@
-# This workflow installs the latest version of Terraform CLI and configures the Terraform CLI configuration file
-# with an API token for Terraform Cloud (app.terraform.io). On pull request events, this workflow will run
-# `terraform init`, `terraform fmt`, and `terraform plan` (speculative plan via Terraform Cloud). On push events
-# to the "main" branch, `terraform apply` will be executed.
-#
-# Documentation for `hashicorp/setup-terraform` is located here: https://github.com/hashicorp/setup-terraform
-#
-# To use this workflow, you will need to complete the following setup steps.
-#
-# 1. Create a `main.tf` file in the root of this repository with the `remote` backend and one or more resources defined.
-#   Example `main.tf`:
-#     # The configuration for the `remote` backend.
-#     terraform {
-#       backend "remote" {
-#         # The name of your Terraform Cloud organization.
-#         organization = "example-organization"
-#
-#         # The name of the Terraform Cloud workspace to store Terraform state files in.
-#         workspaces {
-#           name = "example-workspace"
-#         }
-#       }
-#     }
-#
-#     # An example resource that does nothing.
-#     resource "null_resource" "example" {
-#       triggers = {
-#         value = "A example resource that does nothing!"
-#       }
-#     }
-#
-#
-# 2. Generate a Terraform Cloud user API token and store it as a GitHub secret (e.g. TF_API_TOKEN) on this repository.
-#   Documentation:
-#     - https://www.terraform.io/docs/cloud/users-teams-organizations/api-tokens.html
-#     - https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets
-#
-# 3. Reference the GitHub secret in step using the `hashicorp/setup-terraform` GitHub Action.
-#   Example:
-#     - name: Setup Terraform
-#       uses: hashicorp/setup-terraform@v1
-#       with:
-#         cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-
-name: 'Terraform'
+name: 'Finops & Terraform'
 
 on:
   push:
     branches: [ "main" ]
     paths-ignore:
-      - 'plan.json'
+      - 'baseplan.json'
   pull_request:
+  workflow_dispatch:
+    inputs:
+      choice:
+        type: choice
+        description: Select an evironment
+        options:
+        - dev
+        - staging
+        - prod
 
 permissions:
   contents: write
@@ -100,16 +65,20 @@ jobs:
     # Generates an execution plan for Terraform
     - name: Terraform Plan with Base Benchmark variables
       run: |
-          terraform plan -input=false  -out tfplan.binary 
-          terraform show -json tfplan.binary > plan.json
-          infracost breakdown --path plan.json
+          terraform plan -input=false -var-file=base.tfvars  -out tfbaseplan.binary 
+          terraform show -json tfbaseplan.binary > baseplan.json
+          infracost breakdown --path baseplan.json --out-file baseplan.json --format json
+          terraform plan -input=false -var-file="${{ github.event.inputs.choice }}".tfvars  -out "tf${{ github.event.inputs.choice }}"plan.binary 
+          terraform show -json "tf${{ github.event.inputs.choice }}"plan.binary  > "tf${{ github.event.inputs.choice }}"plan.json
+          infracost breakdown --path "tf${{ github.event.inputs.choice }}"plan.json --out-file baseplan.jso"tf${{ github.event.inputs.choice }}"plan.json --format json
+          infracost diff --format=json --path baseplan.json --compare-to "tf${{ github.event.inputs.choice }}"plan.json
 
-    - name: Commit report
+    - name: Commit Base Plan
       run: |
-          git add plan.json
+          git add baseplan.json
           git config --global user.name 'Register6291'
           git config --global user.email 'register6291@users.noreply.github.com'
-          git commit -am "Base infra plan.json"
+          git commit -am "Base infra baseplan.json"
           git push      
 
       # On push to "main", build or change infrastructure according to Terraform configuration files
