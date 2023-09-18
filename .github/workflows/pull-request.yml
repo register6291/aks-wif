@@ -48,7 +48,7 @@ jobs:
         run: |
             terraform plan -input=false -var-file=dev.tfvars  -out tfdevplan.binary 
             terraform show -json tfdevplan.binary  > devplan.json
-            infracost breakdown --pathdevplan.json --out-file devplan.json --format json
+            infracost breakdown --path devplan.json --out-file devplan.json --format json
             infracost diff --format=json --path devplan.json --compare-to baseplan.json --out-file=/tmp/infracost.json
 
       - name: Post Infracost comment
