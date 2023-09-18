@@ -1,18 +1,16 @@
 name: 'Finops & Terraform'
 
 on:
-    paths-ignore:
-      - 'baseplan.json'
-workflow_dispatch:
-    inputs:
-      environment:
-        type: choice
-        description: Select an evironment
-        default: dev
-        options:
-        - dev
-        - staging
-        - prod
+    workflow_dispatch:
+        inputs:
+          environment:
+            type: choice
+            description: Select an evironment
+            default: dev
+            options:
+            - dev
+            - staging
+            - prod
 
 permissions:
   contents: write
