@@ -16,6 +16,9 @@ module "aks" {
   oidc_issuer_enabled             = true
   workload_identity_enabled       = true
   location                        = var.location
+  sku_tier                        = var.sku_tier
+  os_disk_size_gb                 = var.os_disk_size_gb
+  agents_size                     = var.agents_size
 }
 
 resource "azurerm_user_assigned_identity" "wif_identity" {
