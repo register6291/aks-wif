@@ -50,7 +50,6 @@ jobs:
             terraform show -json tfdevplan.binary  > devplan.json
             infracost breakdown --path devplan.json --out-file devplan.json --format json
             infracost diff --format=json --path devplan.json --compare-to baseplan.json --out-file=/tmp/infracost.json
-            infracost diff --path devplan.json --compare-to baseplan.json --out-file=/tmp/compare.json
 
       - name: Post Infracost comment
         run: |
@@ -59,9 +58,4 @@ jobs:
                                      --github-token=${{github.token}} \
                                      --pull-request=${{github.event.pull_request.number}} \
                                      --behavior=update 
-            infracost comment github --path=/tmp/compare.json \
-                                     --repo=$GITHUB_REPOSITORY \
-                                     --github-token=${{github.token}} \
-                                     --pull-request=${{github.event.pull_request.number}} \
-                                     --behavior=update
                                      
