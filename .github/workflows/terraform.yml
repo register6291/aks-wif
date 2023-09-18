@@ -69,8 +69,7 @@ jobs:
           terraform plan -input=false -var-file=${{ inputs.environment }}.tfvars  -out tf${{ inputs.environment }}plan.binary 
           terraform show -json tf${{ inputs.environment }}plan.binary  > ${{ inputs.environment }}plan.json
           infracost breakdown --path ${{ inputs.environment }}plan.json --out-file ${{ inputs.environment }}plan.json --format json
-          infracost diff --format=json --path baseplan.json --compare-to ${{ inputs.environment }}plan.json
-
+          infracost diff --format=diff --path ${{ inputs.environment }}plan.json --compare-to baseplan.json
     - name: Commit Base Plan
       run: |
           git add baseplan.json
